@@ -1,4 +1,5 @@
-# Socketry
+# Socketry 
+## [Docs](https://playby.github.io/Socketry/)
 
 ## About
 
