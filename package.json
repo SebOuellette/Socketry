@@ -4,7 +4,8 @@
   "description": "A socket library to help with your websocket needs!",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "keywords": [
     "socketjs",
@@ -22,9 +23,19 @@
     "ws",
     "server"
   ],
+  "repo": "https://github.com/PlayBy/Socketry",
   "author": "SharkFinCode",
   "license": "MIT",
   "dependencies": {
     "ws": "^5.1.1"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PlayBy/Socketry.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PlayBy/Socketry/issues"
+  },
+  "homepage": "https://github.com/PlayBy/Socketry#readme"
 }
