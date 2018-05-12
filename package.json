@@ -1,0 +1,30 @@
+{
+  "name": "socketry",
+  "version": "1.0.1",
+  "description": "A socket library to help with your websocket needs!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "socketjs",
+    "websocket",
+    "socket",
+    "io",
+    "socket.js",
+    "socketry",
+    "websockets",
+    "sharkfin",
+    "code",
+    "npm",
+    "node",
+    "http",
+    "ws",
+    "server"
+  ],
+  "author": "SharkFinCode",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^5.1.1"
+  }
+}
