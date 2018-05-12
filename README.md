@@ -26,8 +26,8 @@ server.on('connect', usr => {
     console.log('User connected!');
     
     // Fires when the client closes or disconnects from the server
-    usr.on('exit', extUsr => {
-        console.log('User Diconnected');
+    usr.on('end', extUsr => {
+        console.log('User Disconnected');
     });
     
     // fires when a message is sent to the server
@@ -61,8 +61,8 @@ socket.on('open', usr => {
     // Send a message to the server
     socket.send('Message');
 
-    // Disconnect from the server
-    socket.exit();
+    // Close the websocket connection
+    socket.end();
 });
 ```
 
