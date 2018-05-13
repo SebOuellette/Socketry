@@ -75,10 +75,11 @@ class Client extends EventEmitter {
     }
     /**
      * Send data to the server
-     * @param {string} msg - The message content
+     * @param {object} msg - The message content
      */
     send(msg) {
-        this.client.send(msg);
+        if (typeof msg !== 'object') throw new Error('Expected type: object');
+        this.client.send(JSON.stringify(msg));
     }
 
     /**

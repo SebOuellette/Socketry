@@ -1,5 +1,5 @@
-const Socket = require('./index.js');
-const socket = new Socket.Client('ws://127.0.0.1:8080');
+const Socket = require('../index.js');
+const socket = new Socket.Client('ws://localtest.com:8080');
 
 socket.on('open', () => {
     console.log('Connected!');
@@ -8,6 +8,6 @@ socket.on('open', () => {
         console.log(msg);
     });
 
-    socket.send('Message');
+    socket.send({msg: 'Message'});
     socket.end();
 });

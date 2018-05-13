@@ -32,11 +32,13 @@ server.on('connect', usr => {
     });
     
     // fires when a message is sent to the server
-    usr.on('message', (msg, from) => {
-        console.log(msg);
+    usr.on('message', (data, from) => {
+        // Parse the data so that you can use each part
+        data = JSON.parse(data);
+        console.log(data);
         // Sends the message back to every client
         server.clients.forEach(c => {
-            c.send(msg);
+            c.send(`${data.usr}: ${data.msg}`);
         });
     });
 });
@@ -59,12 +61,13 @@ socket.on('open', usr => {
         console.log(msg);
     });
 
-    // Send a message to the server
-    socket.send('Message');
+    // Send a message to the server in object form.
+    socket.send({msg: 'Message', usr: 'SharkFin'});
 
     // Close the websocket connection
     socket.end();
 });
 ```
 
-#
+### .send()
+When sending with the client, you send an object. You can have any property inside the object, as long as the server will accept it. 
