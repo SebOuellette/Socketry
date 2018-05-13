@@ -1,4 +1,5 @@
-<img src='./docs/images/Words.png'>
+<img src='./docs/images/Words.png'><br/>
+<img src='https://travis-ci.org/PlayBy/Socketry.svg?branch=master'>
 
 ## [Docs](https://playby.github.io/Socketry/)
 
