@@ -1,5 +1,6 @@
 <img src='./docs/images/Words.png'><br/>
 <img src='https://travis-ci.org/PlayBy/Socketry.svg?branch=master'>
+<img src='https://ci.appveyor.com/api/projects/status/lkhnwcrii036fphh?svg=true'>
 
 ## [Docs](https://playby.github.io/Socketry/)
 
