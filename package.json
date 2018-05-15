@@ -1,6 +1,6 @@
 {
   "name": "socketry",
-  "version": "1.9.9",
+  "version": "1.9.91",
   "description": "A socket library to help with your websocket needs!",
   "main": "index.js",
   "scripts": {

@@ -121,7 +121,7 @@ class Client extends EventEmitter {
                         this.rooms.push(JSON.parse(data).details.room);
 
                     }
-                } catch {
+                } catch () {
                     this.emit('message', data);
                 }
             });
