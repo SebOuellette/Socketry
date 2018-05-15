@@ -1,29 +1,11 @@
 const WebSocket = require('ws');
 const { EventEmitter } = require('events');
 
+// ------ Server ------
 /**
- * The user class which is passed down to the server connection event
- */
-class User extends EventEmitter {
-    constructor(ws) {
-        super();
-        this.ws = ws;
-    }
-
-    /**
-     * Send data to a client
-     * @param {string} msg - The message content
-     */
-    send(msg) {
-        this.ws.send(msg);
-    }
-}
-
-
-/**
- * The Server class
+ * Create a new server
  * @constructor
- * @param {number} port - Create a new server that listens to an event
+ * @param {number} port - Choose the port for the server to listen to.
  */
 class Server extends EventEmitter {
     constructor(port) {
@@ -31,32 +13,94 @@ class Server extends EventEmitter {
         if (typeof port !== 'number') throw Error('Expected type: number');
 
         this.clients = [];
+        this.rooms = [];
         this.port = port;
         this.server = new WebSocket.Server({ port });
 
         this.server.on('connection', ws => {
-            ws.id = Math.round(Math.random() * 10000000000000000);
+            ws.id = `0${Math.round(Math.random() * 10000000000000000)}`;
             ws.user = new User(ws);
             this.clients.push(ws.user);
-            this.emit('connection', ws);
+            this.emit('connection', ws.user);
 
-            ws.user.on('message', (msg) => {
-                ws.user.emit('message', (msg, ws));
+            ws.on('message', (msg) => {
+                if (!JSON.parse(msg).socketry) {
+                    ws.user.emit('message', (msg));
+                } else if (JSON.parse(msg).type === 'joinRoom') {
+                    if (!this.rooms.length) ws.send(JSON.stringify({socketry: true, type: 'Error', details: {error: 'No rooms available'}}));
+                    if (!this.rooms.filter(r => r.name == JSON.parse(msg).details.name)) ws.send(JSON.stringify({socketry: true, type: 'Error', details: {error: 'No rooms with that name'}}));
+                    
+                    let name = JSON.parse(msg).details.name;
+                    this.rooms.filter(r => r.name == name)[0].clients.push(ws);
+                    ws.send(JSON.stringify({socketry: true, type: 'roomJoined', details: {room: {id: this.rooms.filter(r => r.name == name)[0].id, name: this.rooms.filter(r => r.name == name)[0].name}}}));
+                }
             });
 
             ws.on('close', () => {
-                ws.emit('end', this.clients.filter(c => c.readyState !== 1)[0]);
-                this.clients = this.clients.filter(c => c.readyState === 1);
+                ws.user.emit('end', this.clients.filter(c => c.server.readyState !== 1)[0]);
+                this.clients = this.clients.filter(c => c.server.readyState === 1);
+                this.rooms.forEach(r => {
+                    r.clients = r.clients.filter(c => c.readyState === 1);
+                });
             });
         });
     }
+
+    /**
+     * Create a new room
+     * @param {string} room - Name of the room you would like to connect to
+     */
+    get Room() {
+        return room.bind(null, this);
+    }
 }
 
+/**
+ * The room class. New rooms can be created with the Server class
+ */
+class room extends EventEmitter {
+    constructor (server, name) {
+        super();
+        this.id = `1${Math.round(Math.random() * 10000000000000000)}`;
+        this.oname = name;
+        if(!server.rooms.filter(r => r.oname === name).length) {
+            this.name = name;
+        } else {
+            this.name = `${name}-${server.rooms.filter(r => r.oname === name).length}`;
+        }
+        this.clients = [];
+        this.server = {
+            port: server.port,
+            socket: server.server
+        };
+        server.rooms.push(this);
+    }
+}
 
+/**
+ * The user class which is passed down to the server connection event (ids start with a '0')
+ * @constructor
+ */
+class User extends EventEmitter {
+    constructor(ws) {
+        super();
+        this.server = ws;
+    }
+
+    /**
+     * Send data to a client
+     * @param {string} msg - The message content
+     */
+    send(msg) {
+        this.server.send(msg);
+    }
+}
+
+// ------ Client ------
 /**
  * The Client class
  * @constructor
- * @param {string} url - Connect to a socketry server
+ * @param {string} url - Connect to a socketry server (ids start with a '0')
  */
 class Client extends EventEmitter {
     constructor(url) {
@@ -64,12 +108,22 @@ class Client extends EventEmitter {
         if (typeof url !== 'string') throw Error('Expected type: number');
         this.url = url;
         this.client = new WebSocket(url);
+        this.rooms = [];
 
         this.client.on('open', () => {
             this.emit('open');
 
             this.client.on('message', data => {
-                this.emit('message', data);
+                try {
+                    if (JSON.parse(data).type == 'Error') {
+                        throw Error(JSON.parse(data).details.error);
+                    } else if (JSON.parse(data).type == 'roomJoined') {
+                        this.rooms.push(JSON.parse(data).details.room);
+
+                    }
+                } catch {
+                    this.emit('message', data);
+                }
             });
         });
     }
@@ -78,7 +132,7 @@ class Client extends EventEmitter {
      * @param {object} msg - The message content
      */
     send(msg) {
-        if (typeof msg !== 'object') throw new Error('Expected type: object');
+        if (typeof msg !== 'object') throw Error('Expected type: object');
         this.client.send(JSON.stringify(msg));
     }
 
@@ -87,6 +141,16 @@ class Client extends EventEmitter {
      */
     end() {
         this.client.close();
+    }
+
+    /**
+     * Join a room
+     * @param {string} room - Name of the room you would like to join
+     */
+    joinRoom(room) {
+        if (typeof room !== 'string') throw Error('Expected type: string');
+        this.client.send(JSON.stringify({socketry: true, type: 'joinRoom', details: {name: room}}));
+        // {socketry: true, type: 'joinRoom', details: {name: room}}
     }
 }
 

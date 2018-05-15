@@ -1,5 +1,7 @@
-const Socket = require('../index.js');
-const server = new Socket.Server(8080);
+const { Server } = require('../index.js');
+const server = new Server(8080);
+const room = new server.Room('foo');
+const room1 = new server.Room('foo');
 
 server.on('connection', usr => {
     console.log('User connected!');
@@ -8,7 +10,7 @@ server.on('connection', usr => {
         console.log('User Diconnected');
     });
 
-    usr.on('message', (data, from) => {
+    usr.on('message', data => {
         data = JSON.parse(data);
         console.log(data);
         server.clients.forEach(c => {
