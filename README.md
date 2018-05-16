@@ -38,12 +38,12 @@ server.on('connection', usr => {
     });
     
     // fires when a message is sent to the server
-    usr.on('message', (data, from) => {
+    usr.on('message', (data, room) => {
         // Parse the data so that you can use each part
         data = JSON.parse(data);
         console.log(data);
-        // Sends the message back to every client
-        server.clients.forEach(c => {
+        // Sends the message back to every client in the room
+        room.clients.forEach(c => {
             c.send(`${data.usr}: ${data.msg}`);
         });
     });
@@ -66,21 +66,33 @@ socket.on('open', usr => {
 
     console.log('Connected!');
 
-    // Fires when server sends a message to the client
-    socket.on('message', (msg) => {
-        console.log(msg);
+    // Fires when the client joins the room
+    socket.on('join', room => {
+        console.log('Joined Room');
+        // Fires when server sends a message to the client in the room
+        room.on('message', (msg) => {
+            console.log(msg);
+        });
+
+        // Send a message to the server in object form.
+        socket.send({msg: 'Message', usr: 'SharkFin'});
+
+        // Leave the room
+        room.leave();
+
+        // Close the websocket connection 
+        // socket.end();
     });
 
-    // Send a message to the server in object form.
-    socket.send({msg: 'Message', usr: 'SharkFin'});
-
-    // Close the websocket connection
-    socket.end();
+    // Fires when the client leaves a room
+    socket.on('leave', room => {
+        console.log('Left Room');
+    });
 });
 ```
 
 ### Rooms
-Rooms have not yet been added, but you will be able to join multiple rooms in the client, and host multiple rooms on a server. As a client, all the rooms you join must be on the same server, unless you create another client that connects a different address. 
+The websockets are split into rooms. This means that you can have something that acts as two or more servers, when it's really just one! This means you can host the socket server on one node process. The server can do whatever it wants with the rooms messages. When a message is recieved, the server can send it to all teh clients in the room, just a few clients, or to every room. This would be good for if you wan't to make announcements to every room about an event or such. 
 
 ### .send()
 When sending with the client, you send an object. You can have any property inside the object, as long as the server will accept it. 

@@ -23,9 +23,11 @@ class Server extends EventEmitter {
             this.clients.push(ws.user);
             this.emit('connection', ws.user);
 
-            ws.on('message', (msg) => {
+            ws.on('message', msg => {
                 if (!JSON.parse(msg).socketry) {
-                    ws.user.emit('message', (msg));
+                    let msgB = JSON.parse(msg);
+                    delete msgB.sendRoomName;
+                    ws.user.emit('message', JSON.stringify(msgB), this.rooms.filter(r => r.name == JSON.parse(msg).sendRoomName)[0]);
                 } else if (JSON.parse(msg).type === 'joinRoom') {
                     if (!this.rooms.length) ws.send(JSON.stringify({socketry: true, type: 'Error', details: {error: 'No rooms available'}}));
                     if (!this.rooms.filter(r => r.name == JSON.parse(msg).details.name)) ws.send(JSON.stringify({socketry: true, type: 'Error', details: {error: 'No rooms with that name'}}));
@@ -33,6 +35,10 @@ class Server extends EventEmitter {
                     let name = JSON.parse(msg).details.name;
                     this.rooms.filter(r => r.name == name)[0].clients.push(ws);
                     ws.send(JSON.stringify({socketry: true, type: 'roomJoined', details: {room: {id: this.rooms.filter(r => r.name == name)[0].id, name: this.rooms.filter(r => r.name == name)[0].name}}}));
+                } else if (JSON.parse(msg).type === 'leaveRoom') {
+                    let name = JSON.parse(msg).details.name;
+                    this.rooms.filter(r => r.name == name)[0].clients = this.rooms.filter(r => r.name == name)[0].clients.filter(c => c.id !== ws.id);
+                    ws.send(JSON.stringify({socketry: true, type: 'roomLeft', details: {name: JSON.parse(msg).details.name, clients: this.rooms.filter(r => r.name == name)[0].clients.length}}));
                 }
             });
 
@@ -119,21 +125,13 @@ class Client extends EventEmitter {
                         throw Error(JSON.parse(data).details.error);
                     } else if (JSON.parse(data).type == 'roomJoined') {
                         this.rooms.push(JSON.parse(data).details.room);
-
+                        this.emit('join', new clientRoom(JSON.parse(data).details.room, this));
+                    } else if (JSON.parse(data).type == 'roomLeft') {
+                        this.emit('leave', JSON.stringify({name: JSON.parse(data).name, clients: JSON.parse(data).clients}));
                     }
-                } catch (err) {
-                    this.emit('message', data);
-                }
+                } catch (err) {}
             });
         });
-    }
-    /**
-     * Send data to the server
-     * @param {object} msg - The message content
-     */
-    send(msg) {
-        if (typeof msg !== 'object') throw Error('Expected type: object');
-        this.client.send(JSON.stringify(msg));
     }
 
     /**
@@ -151,6 +149,39 @@ class Client extends EventEmitter {
         if (typeof room !== 'string') throw Error('Expected type: string');
         this.client.send(JSON.stringify({socketry: true, type: 'joinRoom', details: {name: room}}));
         // {socketry: true, type: 'joinRoom', details: {name: room}}
+    }
+}
+
+class clientRoom extends EventEmitter {
+    constructor (room, main) {
+        super();
+        this.room = room;
+        this.main = main;
+
+        this.main.client.on('message', data => {
+            try {
+                JSON.parse(data);
+            } catch (err) {
+                this.emit('message', data);
+            }
+        });
+    }
+
+    /**
+     * Send data to a room
+     * @param {object} msg - The message content
+     */
+    send(msg) {
+        if (typeof msg !== 'object') throw Error('Expected type: object');
+        msg.sendRoomName = this.room.name;
+        this.main.client.send(JSON.stringify(msg));
+    }
+
+    /** Leave a room
+     */
+    leave() {
+        this.main.rooms = this.main.rooms.filter(r => r.name !== this.room.name);
+        this.main.client.send(JSON.stringify({socketry: true, type: 'leaveRoom', details: this.room}));
     }
 }
 
